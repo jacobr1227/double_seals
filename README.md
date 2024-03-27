@@ -10,4 +10,4 @@ Feel free to use this for your own seal mods!
 Requires [Balamod](https://github.com/UwUDev/balamod/)
 
 ### Installation
-Drop the folders from the zip over in releases into %appdata%/Balatro
+Drop the folders from the zip over in releases into %appdata%/Balatro for Windows, or ~/.local/share/Steam/steamapps/compatdata/2379780/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro for Linux.
