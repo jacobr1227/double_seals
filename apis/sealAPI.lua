@@ -1,10 +1,12 @@
 local mod_id = "sealAPI"
 local mod_name = "Seal API"
-local mod_version = "0.85"
+local mod_version = "1.0"
 local mod_author = "jacobr1227"
 
 local loc_list = {}
 local seal_list = {}
+local loc_queued = {}
+local first_pass = true
 
 --Bugs:
     --In the Seal Collection menu, the card's title will be incorrect, using the seal_id instead of the label. This only affects the collection.
@@ -15,6 +17,7 @@ function add_seal(seal_id, label, color, shader, desc)
     -- Prepare the data contents, add to the pools.
     local loc_id = string.lower(seal_id) .. "_seal"
     table.insert(loc_list, loc_id)
+    table.insert(loc_queued, false)
     local data = {}
     data.set = 'Seal'
     data.discovered = false
@@ -87,6 +90,7 @@ function remove_seals()
     end
 end
 
+--Run this at the end.
 function inject_overrides()
     --Injects the info_queues for badge/UI data
     local info_queues = [[local info_queue = {}
@@ -95,8 +99,11 @@ function inject_overrides()
             ]]
     if #loc_list > 0 then
         for i = 1, #loc_list do
-            info_queues = info_queues ..string.format([[if v == '%s' then info_queue[#info_queue + 1] = {key = '%s', set = 'Other'} end
-            ]], loc_list[i], loc_list[i])
+            if loc_queued[i] == false then
+                info_queues = info_queues ..string.format([[if v == '%s' then info_queue[#info_queue + 1] = {key = '%s', set = 'Other'} end
+                ]], loc_list[i], loc_list[i])
+                loc_queued[i] = true
+            end
         end
         info_queues = info_queues .. [[end
     end]]
@@ -104,32 +111,34 @@ function inject_overrides()
     end
 
     --Injects the new seal generator code to both places it is seen
-    local fun_name = "Card:open"
-    local file_name = "card.lua"
-    local to_replace = "local seal_type = pseudorandom"
-    local replacement = [[local seal_type = pseudorandom(pseudoseed('stdsealtype'..G.GAME.round_resets.ante), 1, #G.P_CENTER_POOLS['Seal'])
-        local sealName
+    if first_pass then
+        local fun_name = "Card:open"
+        local file_name = "card.lua"
+        local to_replace = "local seal_type = pseudorandom"
+        local replacement = [[local seal_type = pseudorandom(pseudoseed('stdsealtype'..G.GAME.round_resets.ante), 1, #G.P_CENTER_POOLS['Seal'])
+            local sealName
+                for k, v in pairs(G.P_SEALS) do
+                    if v.order == seal_type then 
+                        sealName = k
+                        card:set_seal(sealName)
+                    end
+                end--]]
+        inject(file_name, fun_name, "card:set_seal", "eat")
+        inject(file_name, fun_name, to_replace, replacement)
+        local to_replace = "local seal_type = pseudorandom"
+        local replacement = [[local seal_type = pseudorandom(pseudoseed('certsl'), 1, #G.P_CENTER_POOLS['Seal'])
+            local sealName
             for k, v in pairs(G.P_SEALS) do
                 if v.order == seal_type then 
                     sealName = k
-                    card:set_seal(sealName)
+                    _card:set_seal(sealName, true)
                 end
-            end--]]
-    inject(file_name, fun_name, "card:set_seal", "eat")
-    inject(file_name, fun_name, to_replace, replacement)
-    local to_replace = "local seal_type = pseudorandom"
-    local replacement = [[local seal_type = pseudorandom(pseudoseed('certsl'), 1, #G.P_CENTER_POOLS['Seal'])
-        local sealName
-        for k, v in pairs(G.P_SEALS) do
-            if v.order == seal_type then 
-                sealName = k
-                _card:set_seal(sealName, true)
             end
-        end
-        local throwaway = pseudorandom]]
-    fun_name = "Card:calculate_joker"
-    inject(file_name, fun_name, "_card:set_seal", "eat")
-    inject(file_name, fun_name, to_replace, replacement)
+            local throwaway = pseudorandom]]
+        fun_name = "Card:calculate_joker"
+        inject(file_name, fun_name, "_card:set_seal", "eat")
+        inject(file_name, fun_name, to_replace, replacement)
+    end
 end
 
 function add_shader(seal_id, shader)
