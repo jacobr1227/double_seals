@@ -1,18 +1,20 @@
 --[[For use with the Balamod mod loader. Likely not compatible with mods by other developers that introduce new seals.
 Authored March 2024, Jacob Rogers
-Core functions inspired by/modified from AxUtil @ https://github.com/AxBolduc/GreenSeal/blob/main/Util.lua]] mod_id =
-    "double_seals"
+Core functions inspired by/modified from AxUtil @ https://github.com/AxBolduc/GreenSeal/blob/main/Util.lua]] 
+local mod_id = "double_seals"
 
 if (sendDebugMessage == nil) then
     sendDebugMessage = function(_)
     end
 end
 
+--TODO: increase rarity of double seals compared to normal ones.
+
 table.insert(mods, {
     mod_id = mod_id,
     name = "Double Seals",
     author = "jacobr1227",
-    version = "v1.0",
+    version = "v0.85",
     description = {"Adds new Double versions of the 4 base game seals\n as well as all my other seal mods."},
     enabled = true,
     on_enable = function()
@@ -30,16 +32,24 @@ table.insert(mods, {
             name = "Double Purple Seal",
             text = {"Creates 2 {C:tarot}Tarot{} cards", "when {C:attention}discarded.", "{C:inactive}(Must have room)"}
         })
-        if mods["Orange Seals"] then
-            sendDebugMessage("Found orange seals!")
+        local orange = false;
+        local silver = false;
+        for i=1, #mods do
+            if mods[i].mod_id == "orange_seals" then
+                orange = true;
+            end
+            if mods[i].mod_id == "silver_seals" then
+                silver = true;
+            end
+        end
+        if orange then
             add_seal("DoubleOrange", "Double Orange Seal", "orange", nil, {
                 text = {"Randomly {C:attention}enhances{} 2 cards", "when {C:attention}discarded{}",
                         "{C:inactive}(Can overwrite enhancements)"}
             })
         end
-        if mods["Silver Seals"] then
-            sendDebugMessage("Found silver seals!")
-            add_seal("DoubleSilver", "Double Silver Seal", "grey", "polychrome", {
+        if silver then
+            add_seal("DoubleSilver", "Double Silver Seal", "grey", "foil", {
                 text = {"Creates 2 {C:spectral}Spectral{} cards", "if this card is {C:attention}held{} in",
                         "hand at end of round"}
             })
@@ -84,7 +94,22 @@ table.insert(mods, {
                     })
                 end
                 if self.seal == 'DoubleOrange' then
-                    -- Enhance two different cards in hand, randomly.
+                    local updated_card
+                    for i=1, math.min(2, #G.hand.cards-1) do
+                        local chosen_card = pseudorandom_element(G.hand.cards, pseudoseed('random_select'))
+                        if (chosen_card == self or chosen_card == updated_card) and #G.hand.cards > 2 then
+                            while chosen_card == self do
+                                chosen_card = pseudorandom_element(G.hand.cards, pseudoseed('random_select'))
+                            end
+                        end
+                        local enhance_type = pseudorandom_element(G.P_CENTER_POOLS["Enhanced"], pseudoseed('enhcard'))
+                        chosen_card:set_ability(G.P_CENTERS[enhance_type.key], nil, true)
+                        updated_card = chosen_card
+                        card_eval_status_text(chosen_card, 'extra', nil, nil, nil, {
+                            message = "Enhanced!",
+                            colour = G.C.Grey
+                        })
+                    end
                 end
             end
             return fromRef
@@ -143,7 +168,7 @@ table.insert(mods, {
                 end
                 card_eval_status_text(self, 'extra', nil, nil, nil, {
                     message = "+2 Spectral",
-                    colour = G.C.SECONDARY_SET.Planet
+                    colour = G.C.SECONDARY_SET.Spectral
                 })
                 ret.effect = true
             end
