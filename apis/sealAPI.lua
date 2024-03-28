@@ -4,7 +4,10 @@ local mod_version = "0.85"
 local mod_author = "jacobr1227"
 
 local loc_list = {}
+local seal_list = {}
 
+--Bugs:
+    --In the Seal Collection menu, the card's title will be incorrect, using the seal_id instead of the label. This only affects the collection.
 -- Seal_id MUST contain no spaces or lua-unsafe characters.
 -- Image name in assets/ must match the seal_id, but lowercase and adding _seal at the end.
 -- Note: function code will need to be added manually. Refer to https://github.com/jacobr1227/double_seals/double_seals.lua for examples
@@ -20,6 +23,7 @@ function add_seal(seal_id, label, color, shader, desc)
     G.P_SEALS[seal_id] = data
     table.insert(G.P_CENTER_POOLS['Seal'], data)
     desc.name = label
+    table.insert(seal_list, data)
 
     -- Parse localization text.
     local newSealText = {
@@ -40,8 +44,7 @@ function add_seal(seal_id, label, color, shader, desc)
     G.localization.misc.labels[loc_id] = label
     G.ASSET_ATLAS[loc_id] = {}
     G.ASSET_ATLAS[loc_id].name = loc_id
-    G.ASSET_ATLAS[loc_id].image = love.graphics.newImage("assets/" .. G.SETTINGS.GRAPHICS.texture_scaling .. "x/" ..
-                                                             loc_id .. ".png", {
+    G.ASSET_ATLAS[loc_id].image = love.graphics.newImage("assets/" .. G.SETTINGS.GRAPHICS.texture_scaling .. "x/" ..loc_id .. ".png", {
         mipmaps = true,
         dpiscale = G.SETTINGS.GRAPHICS.texture_scaling
     })
@@ -55,12 +58,13 @@ function add_seal(seal_id, label, color, shader, desc)
     if shader then
         add_shader(seal_id, shader)
     end
+
     -- Inserting colors for badges/etc.
     local color_string = string.format([[purple_seal = G.C.PURPLE,
     %s = %s]], loc_id, "G.C." .. string.upper(color) .. ',')
     inject("functions/UI_definitions.lua", "get_badge_colour", "purple_seal = G.C.PURPLE,", color_string)
 
-    -- I like sorted tables :)
+    -- Sort your tables
     for k, v in pairs(G.P_SEALS) do
         table.sort(v, function(a, b)
             return a.order < b.order
@@ -71,22 +75,35 @@ function add_seal(seal_id, label, color, shader, desc)
     end)
 end
 
+function remove_seals()
+    for k, v in pairs(seal_list) do
+        local loc_id = string.lower(k) .. "_seal"
+        table.remove(G.P_CENTER_POOLS['Seal'], v)
+        G.P_SEALS[k] = nil
+        G.localization.descriptions.Other[loc_id] = nil
+        G.localization.misc.labels[loc_id] = nil
+        G.ASSET_ATLAS[loc_id] = nil
+        G.shared_seals[k] = nil
+    end
+end
+
 function inject_overrides()
+    --Injects the info_queues for badge/UI data
     local info_queues = [[local info_queue = {}
     if first_pass and not (_c.set == 'Edition') and badges then
         for k, v in ipairs(badges) do
             ]]
     if #loc_list > 0 then
         for i = 1, #loc_list do
-            info_queues = info_queues ..
-                              string.format(
-                    [[if v == '%s' then info_queue[#info_queue + 1] = {key = '%s', set = 'Other'} end
+            info_queues = info_queues ..string.format([[if v == '%s' then info_queue[#info_queue + 1] = {key = '%s', set = 'Other'} end
             ]], loc_list[i], loc_list[i])
         end
         info_queues = info_queues .. [[end
     end]]
         inject("functions/common_events.lua", "generate_card_ui", "local info_queue = {}", info_queues)
     end
+
+    --Injects the new seal generator code to both places it is seen
     local fun_name = "Card:open"
     local file_name = "card.lua"
     local to_replace = "local seal_type = pseudorandom"
@@ -100,9 +117,24 @@ function inject_overrides()
             end--]]
     inject(file_name, fun_name, "card:set_seal", "eat")
     inject(file_name, fun_name, to_replace, replacement)
+    local to_replace = "local seal_type = pseudorandom"
+    local replacement = [[local seal_type = pseudorandom(pseudoseed('certsl'), 1, #G.P_CENTER_POOLS['Seal'])
+        local sealName
+        for k, v in pairs(G.P_SEALS) do
+            if v.order == seal_type then 
+                sealName = k
+                _card:set_seal(sealName, true)
+            end
+        end
+        local throwaway = pseudorandom]]
+    fun_name = "Card:calculate_joker"
+    inject(file_name, fun_name, "_card:set_seal", "eat")
+    inject(file_name, fun_name, to_replace, replacement)
 end
 
 function add_shader(seal_id, shader)
+    --If the seal object contains a valid shader label, redraws the sprite and renders a new shader on top.
+    --Not performance optimized.
     local valid_shader = {
         dissolve = true,
         voucher = true,
@@ -130,7 +162,6 @@ function add_shader(seal_id, shader)
 end
 
 -- Debug tools for various purposes.
-
 --Dumps table data to the caller
 function dump(o)
     if o == nil then
@@ -150,7 +181,7 @@ function dump(o)
     end
 end
 
---Checks how many potential replacements would occur with an injection. Used to check if inject targets are valid.
+--Checks how many potential replacements would occur with an injection. Used to check if inject targets are valid to test injects.
 function inject_checker(path, function_name, to_replace, replacement)
     local function_body = extractFunctionBody(path, function_name)
     local modified_function_code, num_replacements = function_body:gsub(to_replace, replacement)
@@ -159,11 +190,5 @@ end
 
 function eat(waste, this)
     --This function intentionally does absolutely nothing.
-    --It is used as filler in replacements to fix inject()'s faults
-    if waste then
-        sendDebugMessage(waste)
-    end
-    if this then
-        sendDebugMessage("This!")
-    end
+    --It is used as filler in replacements within inject_overrides() to fix inject()'s faults
 end
