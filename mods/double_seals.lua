@@ -150,35 +150,47 @@ table.insert(mods, {
             return fromRef
         end
         -- Double Gold function
-        local to_replace = "if p_dollars > 0 then"
+        -- This WILL override the original get_p_dollars function.
+        -- If you're experiencing bugs in other mods, swap this block out for the inject below it.
+        function Card:get_p_dollars()
+            local ret = 0
+            if self.seal == 'DoubleGold' then
+                ret = ret + 6
+            end
+            if self.debuff then return 0 end
+            
+            if self.seal == 'Gold' then
+                ret = ret +  3
+            end
+            if self.ability.p_dollars > 0 then
+                if self.ability.effect == "Lucky Card" then 
+                    if pseudorandom('lucky_money') < G.GAME.probabilities.normal/15 then
+                        self.lucky_trigger = true
+                        ret = ret +  self.ability.p_dollars
+                    end
+                else 
+                    ret = ret + self.ability.p_dollars
+                end
+            end
+            if ret > 0 then 
+                G.GAME.dollar_buffer = (G.GAME.dollar_buffer or 0) + ret
+                G.E_MANAGER:add_event(Event({func = (function() G.GAME.dollar_buffer = 0; return true end)}))
+            end
+            return ret
+        end
+        --[=[local to_replace = "if p_dollars > 0 then"
         local replacement = [[if card.seal == 'DoubleGold' then
                         p_dollars = p_dollars + 6
                         end
                         if p_dollars > 0 then]]
         local file_name = "functions/common_events.lua"
         local fun_name = "eval_card"
-        inject(file_name, fun_name, to_replace, replacement)
+        inject(file_name, fun_name, to_replace, replacement)]=]
         
-        -- Certificate Joker seal appearance
-        local to_replace = "local seal_type = pseudorandom"
-        local replacement = [[local seal_type = pseudorandom(pseudoseed('certsl'), 1, #G.P_CENTER_POOLS['Seal'])
-        local sealName
-            for k, v in pairs(G.P_SEALS) do
-                if v.order == seal_type then 
-                    sealName = k
-                    _card:set_seal(sealName, true)
-                end
-            end
-            local throwaway = pseudorandom]]
-        local file_name = "card.lua"
-        local fun_name = "Card:calculate_joker"
-        inject(file_name, fun_name, "_card:set_seal", "eat")
-        inject(file_name, fun_name, to_replace, replacement)
-
         inject_overrides()
         sendDebugMessage("Double Seals enabled!")
     end,
     on_disable = function()
-        -- introduce function disablers.
+        remove_seals()
     end
 })
