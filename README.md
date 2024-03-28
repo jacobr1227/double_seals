@@ -1,4 +1,4 @@
-# Double Seals
+# Double Seals + SealAPI
 A Balatro mod that introduces new seal variants that double the effects of the underlying seal.
 
 ### Supported Seals:
@@ -13,6 +13,20 @@ Requires [Balamod](https://github.com/UwUDev/balamod/)
 
 ### Installation
 Drop the folders from the zip over in releases into %appdata%/Balatro for Windows, or ~/.local/share/Steam/steamapps/compatdata/2379780/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro for Linux.
+
+### API for developers
+The API supports the addition of new seals with just a few functions
+Run the following block (replacing necessary information) for an easy setup for your mod.
+```
+on_enable = function()
+  add_seal("SealId", "Seal Label Name", "color", "shadertype", { text = "descr", "iption" })
+  -- Your effect code here, see the mods folder for examples of what this will look like
+  inject_overrides()
+end
+on_disable = function()
+  remove_seals()
+end
+```
 
 ![Demo Reel](https://github.com/jacobr1227/double_seals/blob/main/double_seals_demo.gif)
 
