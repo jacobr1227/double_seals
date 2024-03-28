@@ -12,7 +12,7 @@ table.insert(mods, {
     mod_id = mod_id,
     name = "Double Seals",
     author = "jacobr1227",
-    version = "v0.85",
+    version = "v1.0",
     description = {"Adds new Double versions of the 4 base game seals\n as well as all my other seal mods."},
     enabled = true,
     on_enable = function()
