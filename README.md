@@ -11,3 +11,5 @@ Requires [Balamod](https://github.com/UwUDev/balamod/)
 
 ### Installation
 Drop the folders from the zip over in releases into %appdata%/Balatro for Windows, or ~/.local/share/Steam/steamapps/compatdata/2379780/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro for Linux.
+
+![Demo Reel](https://github.com/jacobr1227/double_seals/blob/main/double_seals_demo.gif)
