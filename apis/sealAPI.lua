@@ -1,11 +1,10 @@
 local mod_id = "sealAPI"
 local mod_name = "Seal API"
-local mod_version = "1.0"
+local mod_version = "2.0"
 local mod_author = "jacobr1227"
 
 local loc_list = {}
 local seal_list = {}
-local loc_queued = {}
 local first_pass = true
 
 --Bugs:
@@ -16,8 +15,7 @@ local first_pass = true
 function add_seal(seal_id, label, color, shader, desc)
     -- Prepare the data contents, add to the pools.
     local loc_id = string.lower(seal_id) .. "_seal"
-    table.insert(loc_list, loc_id)
-    table.insert(loc_queued, false)
+    loc_list[string.lower(seal_id)] = {loc_id=loc_id, color=color, queued=false}
     local data = {}
     data.set = 'Seal'
     data.discovered = false
@@ -38,7 +36,7 @@ function add_seal(seal_id, label, color, shader, desc)
     for _, line in ipairs(desc.text) do
         newSealText.text_parsed[#newSealText.text_parsed + 1] = loc_parse_string(line)
     end
-    for _, line in ipairs(type(newSealText.name) == 'table' and newSealText.name or {seal_id}) do
+    for _, line in ipairs(type(newSealText.name) == 'table' and newSealText.name or {label}) do
         newSealText.name_parsed[#newSealText.name_parsed + 1] = loc_parse_string(line)
     end
 
@@ -97,12 +95,14 @@ function inject_overrides()
     if first_pass and not (_c.set == 'Edition') and badges then
         for k, v in ipairs(badges) do
             ]]
-    if #loc_list > 0 then
-        for i = 1, #loc_list do
-            if loc_queued[i] == false then
+    local count = 0
+    for _ in pairs(loc_list) do count = count + 1 end
+    if count > 0 then
+        for k, v in pairs(loc_list) do
+            if v.queued == false then
                 info_queues = info_queues ..string.format([[if v == '%s' then info_queue[#info_queue + 1] = {key = '%s', set = 'Other'} end
-                ]], loc_list[i], loc_list[i])
-                loc_queued[i] = true
+                ]], v.loc_id, v.loc_id)
+                loc_list[k].queued = true
             end
         end
         info_queues = info_queues .. [[end
@@ -138,6 +138,28 @@ function inject_overrides()
         fun_name = "Card:calculate_joker"
         inject(file_name, fun_name, "_card:set_seal", "eat")
         inject(file_name, fun_name, to_replace, replacement)
+    end
+end
+
+--If you're creating another card that references a Seal object in its description, run this to add that tooltip.
+--Example input: set="Spectral", name="Deja Vu", seal_id="Red" or "red"
+--This function will generate the necessary colors for any text using the given color of the added seal.
+function inject_seal_infotip(set, name, seal_id)
+    local loc_id = loc_list[string.lower(seal_id)].loc_id
+    local color = loc_list[string.lower(seal_id)].color
+    local info_queue = string.format([[local info_queue = {}
+    if _c.set == '%s' then
+        if _c.name == '%s' then info_queue[#info_queue+1] = {key = '%s', set = 'Other'}
+            ]], set, name, loc_id)
+    info_queue = info_queue .. [[end
+        end]]
+    inject("functions/common_events.lua", "generate_card_ui", "local info_queue = {}", info_queue)
+    if G.C[string.upper(color)] then
+        local replacement = string.format([[red = G.C.RED,
+        %s = G.C.%s,]], string.lower(color), string.upper(color))
+        inject("functions/misc_functions.lua", "loc_colour", "red = G.C.RED,", replacement)
+    else
+        sendDebugMessage("Invalid color provided. Please use a valid color from globals.lua.")
     end
 end
 
