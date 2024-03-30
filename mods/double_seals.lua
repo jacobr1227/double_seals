@@ -8,13 +8,61 @@ if (sendDebugMessage == nil) then
     end
 end
 
---TODO: increase rarity of double seals compared to normal ones.
+--TODO: Possibly increase rarity of double seals in shops?
+
+local function consumeableEffect(card)
+    if card.ability.name == "Blur" then
+        local allowed_list = {'Purple', 'Blue', 'Gold', 'Orange', 'Silver', 'Red'}
+        local conv_card = G.hand.highlighted[1]
+        local seal = nil
+        local doubleable = false
+        sendDebugMessage(allowed_list[3])
+        for i=1, #allowed_list do
+            if conv_card.seal == allowed_list[i] then
+                doubleable = true
+            end
+        end
+        sendDebugMessage(doubleable)
+        if conv_card.seal and doubleable then
+            seal = 'Double' .. conv_card.seal
+        else
+            while seal == nil do
+                local seal_type = pseudorandom(pseudoseed('blurseal'..G.GAME.round_resets.ante), 1, #G.P_CENTER_POOLS['Seal'])
+                for k, v in pairs(G.P_SEALS) do
+                    if v.order == seal_type then 
+                        seal = k
+                    end
+                end
+                if string.sub(seal,1,6) == 'Double' then seal = nil end
+            end
+        end
+        G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.4, func = function()
+            play_sound('tarot1')
+            card:juice_up(0.3, 0.5)
+            card_eval_status_text(conv_card, 'extra', nil, nil, nil, {message="Sealed!"})
+            return true end}))
+        G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.2,func = function()
+            conv_card:set_seal(seal, nil, true)
+            return true end }))
+        delay(0.6)
+        G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.2,func = function() G.hand:unhighlight_all(); return true end }))
+    end
+end
+
+local function consumeableCondition(card)
+    if card.ability.name == "Blur" then
+        if card.ability.consumeable.mod_num >= #G.hand.highlighted and #G.hand.highlighted >= (card.ability.consumeable.min_highlighted or 1) then
+            return true
+        end
+    end
+    return false
+end
 
 table.insert(mods, {
     mod_id = mod_id,
     name = "Double Seals",
     author = "jacobr1227",
-    version = "v0.85",
+    version = "v2.0",
     description = {"Adds new Double versions of the 4 base game seals\n as well as all my other seal mods."},
     enabled = true,
     on_enable = function()
@@ -49,7 +97,7 @@ table.insert(mods, {
             })
         end
         if silver then
-            add_seal("DoubleSilver", "Double Silver Seal", "grey", "foil", {
+            add_seal("DoubleSilver", "Double Silver Seal", "joker_grey", "foil", {
                 text = {"Creates 2 {C:spectral}Spectral{} cards", "if this card is {C:attention}held{} in",
                         "hand at end of round"}
             })
@@ -175,7 +223,7 @@ table.insert(mods, {
             return fromRef
         end
         -- Double Gold function
-        -- This WILL override the original get_p_dollars function.
+        -- Warning: This WILL override the original get_p_dollars function.
         -- If you're experiencing bugs in other mods, swap this block out for the inject below it.
         function Card:get_p_dollars()
             local ret = 0
@@ -211,6 +259,13 @@ table.insert(mods, {
         local file_name = "functions/common_events.lua"
         local fun_name = "eval_card"
         inject(file_name, fun_name, to_replace, replacement)]=]
+
+        local spectral, text = centerHook.addSpectral(self, "c_blur", "Blur", consumeableEffect,
+            consumeableCondition, nil, true, 4, {
+                x = 0,
+                y = 0
+            }, {max_highlighted = 1}, {"{C:attention}Double{} the seal", "on {C:attention}1{} selected card", "in your hand, or add", "a random single {C:attention}seal{}", "if there isn't one."}, true,
+            "assets", "blur_spectral.png")
         
         inject_overrides()
         sendDebugMessage("Double Seals enabled!")

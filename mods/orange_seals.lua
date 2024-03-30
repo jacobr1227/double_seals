@@ -7,11 +7,36 @@ if (sendDebugMessage == nil) then
     end
 end
 
+local function consumeableEffect(card)
+    if card.ability.name == "Gleam" then
+        local conv_card = G.hand.highlighted[1]
+        G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.4, func = function()
+            play_sound('tarot1')
+            card:juice_up(0.3, 0.5)
+            card_eval_status_text(conv_card, 'extra', nil, nil, nil, {message="Sealed!"})
+            return true end}))
+        G.E_MANAGER:add_event(Event({trigger = 'after',delay = 0.2,func = function()
+            conv_card:set_seal(card.ability.extra, nil, true)
+            return true end }))
+        delay(0.6)
+        G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.2,func = function() G.hand:unhighlight_all(); return true end }))
+    end
+end
+
+local function consumeableCondition(card)
+    if card.ability.name == "Gleam" then
+        if card.ability.consumeable.mod_num >= #G.hand.highlighted and #G.hand.highlighted >= (card.ability.consumeable.min_highlighted or 1) then
+            return true
+        end
+    end
+    return false
+end
+
 table.insert(mods, {
     mod_id = mod_id,
     name = "Orange Seals",
     author = "jacobr1227",
-    version = "v1.0",
+    version = "v2.0",
     description = {"Adds new Orange seal\n When discarded, enhances a random card."},
     enabled = true,
     on_enable = function()
@@ -40,7 +65,14 @@ table.insert(mods, {
             end
             return fromRef
         end
+        local spectral, text = centerHook.addSpectral(self, "c_gleam", "Gleam", consumeableEffect,
+            consumeableCondition, nil, true, 4, {
+                x = 0,
+                y = 0
+            }, {extra = 'Orange', max_highlighted = 1}, {"Add an {C:orange}Orange Seal{}", "to {C:attention}1{} selected", "card in your hand"}, true,
+            "assets", "gleam_spectral.png")
         inject_overrides()
+        inject_seal_infotip("Spectral", "Gleam", "orange")
         sendDebugMessage("Orange Seals enabled.")
     end,
     on_disable = function()
