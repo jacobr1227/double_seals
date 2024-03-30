@@ -36,6 +36,6 @@ end
 This API also contains a function for adding infotips to other cards, such as jokers and consumeables.
 Use this when creating other mods that refer to Seal items in their info text.
 
-![Demo Reel](https://github.com/jacobr1227/double_seals/blob/main/double_seals_demo.gif)
+![Demo Reel](https://github.com/jacobr1227/double_seals/blob/main/gifs/double_seals_demo.gif)
 
-![Demo Reel](https://github.com/jacobr1227/double_seals/blob/main/orange_silver_demo_reel.gif)
+![Demo Reel](https://github.com/jacobr1227/double_seals/blob/main/gifs/orange_silver_demo_reel.gif)
