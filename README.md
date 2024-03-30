@@ -11,11 +11,17 @@ Feel free to use this for your own seal mods!
 
 Requires [Balamod](https://github.com/UwUDev/balamod/)
 
+### Other Additions:
+ - 3 new Spectral cards that add the new Seals:
+   - Blur doubles a seal, or adds a random one
+   - Gleam and Mystic add Orange and Silver seals, respectively.
+
 ### Installation
 Drop the folders from the zip over in releases into %appdata%/Balatro for Windows, or ~/.local/share/Steam/steamapps/compatdata/2379780/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro for Linux.
 
 ### API for developers
-The API supports the addition of new seals with just a few functions
+The API supports the addition of new seals with just a few functions.
+
 Run the following block (replacing necessary information) for an easy setup for your mod.
 ```
 on_enable = function()
@@ -27,6 +33,8 @@ on_disable = function()
   remove_seals()
 end
 ```
+This API also contains a function for adding infotips to other cards, such as jokers and consumeables.
+Use this when creating other mods that refer to Seal items in their info text.
 
 ![Demo Reel](https://github.com/jacobr1227/double_seals/blob/main/double_seals_demo.gif)
 
