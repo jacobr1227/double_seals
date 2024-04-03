@@ -9,7 +9,7 @@ A Balatro mod that introduces new seal variants that double the effects of the u
 This mod also includes the necessary custom API file for this mod to work. This may change as balamod receives updates.
 Feel free to use this for your own seal mods!
 
-Requires [Balamod](https://github.com/UwUDev/balamod/)
+Requires [Balamod](https://github.com/UwUDev/balamod/) & [center_hook.lua](https://github.com/nicholassam6425/balatro-mods/tree/main/balamod/apis)
 
 ### Other Additions:
  - 3 new Spectral cards that add the new Seals:
