@@ -1,0 +1,11 @@
+{
+    "id": "double_seals",
+    "name": "Double Seals",
+    "version": "2.0.0",
+    "description": [
+        "Adds in Double Seals for base game mods + Orange/Silver seals."
+    ],
+    "author": "jacobr1227/Skjell",
+    "load_before": [],
+    "load_after": []
+}
