@@ -6,17 +6,15 @@ A Balatro mod that introduces new seal variants that double the effects of the u
   - New Orange Seal: randomly enhances 1 or 2 random cards from your hand when discarded.
   - New Silver Seal: creates 1 or 2 Spectral cards when held in hand at end of round
 
-This mod also includes the necessary custom API file for this mod to work. This may change as balamod receives updates.
-Feel free to use this for your own seal mods!
-
 Requires [Balamod](https://github.com/UwUDev/balamod/) latest build & [center_hook.lua](https://github.com/nicholassam6425/balatro-mods/tree/main/balamod/apis)
 
 Use an older release (v2.0 or less) for older Balamod releases with the old mod format.
 
 ### Other Additions:
- - 3 new Spectral cards that add the new Seals:
-   - Blur doubles a seal, or adds a random one
-   - Gleam and Mystic add Orange and Silver seals, respectively.
+ - ~~3 new Spectral cards that add the new Seals:~~
+   - ~~Blur doubles a seal, or adds a random one~~
+   - ~~Gleam and Mystic add Orange and Silver seals, respectively.~~
+The spectral cards are not currently available with the current codebase. They will be reintroduced later, however.
 
 ### Installation
 Drop the folders from the zip over in releases into %appdata%/Balatro for Windows, or ~/.local/share/Steam/steamapps/compatdata/2379780/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro for Linux.
