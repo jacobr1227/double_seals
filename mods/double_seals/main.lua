@@ -2,6 +2,7 @@ local logging = require("logging")
 local logger = logging.getLogger("double_seals")
 local seal = require("seal")
 local balamod = require("balamod")
+local consumeable = require("consumable")
 
 local function consumeableEffect(card)
     if card.ability.name == "Blur" then
@@ -9,13 +10,11 @@ local function consumeableEffect(card)
         local conv_card = G.hand.highlighted[1]
         local seal = nil
         local doubleable = false
-        sendDebugMessage(allowed_list[3])
         for i = 1, #allowed_list do
             if conv_card.seal == allowed_list[i] then
                 doubleable = true
             end
         end
-        sendDebugMessage(doubleable)
         if conv_card.seal and doubleable then
             seal = 'Double' .. conv_card.seal
         else
@@ -164,10 +163,18 @@ local function sealEffectBlue(self, context)
                 trigger = 'before',
                 delay = 0.0,
                 func = (function()
-                    local card = create_card(card_type, G.consumeables, nil, nil, nil, nil, nil, 'blusl')
-                    card:add_to_deck()
-                    G.consumeables:emplace(card)
-                    G.GAME.consumeable_buffer = 0
+                    if G.GAME.last_hand_played then
+                        local _planet = 0
+                        for k, v in pairs(G.P_CENTER_POOLS.Planet) do
+                            if v.config.hand_type == G.GAME.last_hand_played then
+                                _planet = v.key
+                            end
+                        end
+                        local card = create_card(card_type, G.consumeables, nil, nil, nil, nil, _planet, 'blusl')
+                        card:add_to_deck()
+                        G.consumeables:emplace(card)
+                        G.GAME.consumeable_buffer = 0
+                    end
                     return true
                 end)
             }))
@@ -228,7 +235,7 @@ local function on_enable()
         label = "Double Blue Seal",
         color = "blue",
         description = {"Creates 2 {C:planet}Planet{} cards", "if this card is {C:attention}held{} in",
-        "hand at end of round", "{C:inactive}(Must have room)"},
+                       "hand at end of round", "{C:inactive}(Must have room)"},
         effect = sealEffectBlue,
         timing = "onHold"
     })
@@ -246,7 +253,8 @@ local function on_enable()
         id = "DoublePurple",
         label = "Double Purple Seal",
         color = "purple",
-        description = {"Creates 2 {C:tarot}Tarot{} cards", "when {C:attention}discarded.", "{C:inactive}(Must have room)"},
+        description = {"Creates 2 {C:tarot}Tarot{} cards", "when {C:attention}discarded.",
+                       "{C:inactive}(Must have room)"},
         effect = sealEffectPurple,
         timing = "onDiscard"
     })
@@ -258,7 +266,7 @@ local function on_enable()
             color = "joker_grey",
             shader = "foil",
             description = {"Creates 2 {C:spectral}Spectral{} cards", "if this card is {C:attention}held{} in",
-            "hand at end of round"},
+                           "hand at end of round"},
             effect = sealEffectSilver,
             timing = "onHold"
         })
@@ -270,11 +278,23 @@ local function on_enable()
             label = "Double Orange Seal",
             color = "orange",
             description = {"Randomly {C:attention}enhances{} 2 cards", "when {C:attention}discarded{}",
-            "{C:inactive}(Can overwrite enhancements)"},
+                           "{C:inactive}(Can overwrite enhancements)"},
             effect = sealEffectOrange,
             timing = "onDiscard"
         })
     end
+    consumeable.add {
+        set = "Spectral",
+        mod_id = "double_seals",
+        id = "c_blur",
+        name = "Blur",
+        use_effect = consumeableEffect,
+        use_condition = consumeableCondition,
+        desc = {"{C:attention}Double{} the seal", "on {C:attention}1{} selected card", "in your hand, or add", "a random single {C:attention}seal{}", "if there isn't one."},
+        config = {
+            max_highlighted = 1
+        }
+    }
 end
 
 local function on_disable()
@@ -284,17 +304,7 @@ local function on_disable()
     seal.unregisterSeal("DoublePurple")
     seal.unregisterSeal("DoubleOrange")
     seal.unregisterSeal("DoubleSilver")
-end
-
-local function on_key_pressed(key)
-    if key == "d" then
-        if #G.hand.highlighted == 1 then
-            if G.hand.highlighted[1].seal then
-                seal = G.hand.highlighted[1].seal
-                G.hand.highlighted[1]:set_seal("Double"..seal)
-            end
-        end
-    end
+    consumeable.remove("c_blur")
 end
 
 local function on_error(message)
@@ -304,6 +314,5 @@ end
 return {
     on_enable = on_enable,
     on_disable = on_disable,
-    on_key_pressed = on_key_pressed,
     on_error = on_error
 }

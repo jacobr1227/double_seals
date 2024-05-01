@@ -1,6 +1,7 @@
 local logging = require("logging")
 local logger = logging.getLogger("silver_seals")
 local seal = require("seal")
+local consumeable = require("consumable")
 
 local function consumeableEffect(card)
     if card.ability.name == "Mystic" then
@@ -84,18 +85,25 @@ local function on_enable()
         effect = sealEffect,
         timing = "onHold"
     })
+    consumeable.add {
+        set = "Spectral",
+        mod_id = "silver_seals",
+        id = "c_mystic",
+        name = "Mystic",
+        use_effect = consumeableEffect,
+        use_condition = consumeableCondition,
+        desc = {"Add a {C:joker_grey}Silver Seal{}", "to {C:attention}1{} selected", "card in your hand"},
+        config = {
+            extra = 'Silver',
+            max_highlighted = 1
+        }
+    }
+    seal.addSealInfotip("Spectral", "Mystic", "Silver")
 end
 
 local function on_disable()
     seal.unregisterSeal("Silver")
-end
-
-local function on_key_pressed(key)
-    if key == "s" then
-        if #G.hand.highlighted == 1 then
-            G.hand.highlighted[1]:set_seal("Silver")
-        end
-    end
+    consumeable.remove("c_mystic")
 end
 
 local function on_error(message)
@@ -105,6 +113,5 @@ end
 return {
     on_enable = on_enable,
     on_disable = on_disable,
-    on_key_pressed = on_key_pressed,
     on_error = on_error
 }
