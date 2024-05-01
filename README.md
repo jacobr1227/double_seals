@@ -14,6 +14,7 @@ Use an older release (v2.0 or less) for older Balamod releases with the old mod 
  - ~~3 new Spectral cards that add the new Seals:~~
    - ~~Blur doubles a seal, or adds a random one~~
    - ~~Gleam and Mystic add Orange and Silver seals, respectively.~~
+  
 The spectral cards are not currently available with the current codebase. They will be reintroduced later, however.
 
 ### Installation
