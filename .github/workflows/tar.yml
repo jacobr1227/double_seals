@@ -16,6 +16,14 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
+    - name: Get Current Release
+      id: get_current_release
+      uses: joutvhu/get-release@v1
+      with:
+        debug: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
     - name: Archive using zip or tar
       uses: NSCoder/archive-action@v1.0.0
       
