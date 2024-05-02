@@ -22,8 +22,12 @@ jobs:
     - name: Tarball
       run: tar -czvf double_seals.tar.gz ./mods
 
-    - uses: EndBug/add-and-commit@v9 # You can change this to use a specific version.
+    - name: Upload Release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        default_author: github_actions
-        message: 'Commit via GitHub Actions auto-tar.'
-        pathspec_error_handling: exitImmediately
+        upload_url: ${{ steps.get_current_release.outputs.upload_url }}
+        asset_path: ./double_seals.tar.gz
+        asset_name: double_seals.tar.gz
+        asset_content_type: application/gzip
