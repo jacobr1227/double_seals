@@ -18,7 +18,7 @@ Use an older release (v2.0 or less) for older Balamod releases with the old mod 
 The spectral cards are not currently available with the current codebase. They will be reintroduced later, however.
 
 ### Installation
-Drop the folders from the zip over in releases into %appdata%/Balatro for Windows, or ~/.local/share/Steam/steamapps/compatdata/2379780/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro for Linux.
+Drop the folders from the zip over in releases into %appdata%/Balatro/mods for Windows, or ~/.local/share/Steam/steamapps/compatdata/2379780/pfx/drive_c/users/steamuser/AppData/Roaming/Balatro/mods for Linux.
 
 ### API for developers (FOR BALAMOD <=V0.1.11)
 The API supports the addition of new seals with just a few functions.
