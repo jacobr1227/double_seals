@@ -1,11 +1,8 @@
-# This workflow will install Python dependencies, run tests and lint with a single version of Python
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
-
 name: Auto-tar
 
 on:
-  push:
-    branches: [ "main" ]
+  release:
+    types: [created]
 
 jobs:
   build:
@@ -20,7 +17,6 @@ jobs:
       id: get_current_release
       uses: joutvhu/get-release@v1
       with:
-        tag_name: v2.1
         latest: true
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -31,7 +27,7 @@ jobs:
     - name: Tarball
       run: tar -czvf double_seals.tar.gz ./mods
 
-    - name: Upload Release
+    - name: Upload Release asset
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
