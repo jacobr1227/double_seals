@@ -25,9 +25,9 @@ jobs:
     strategy:
       matrix:
         mod:
-          - my_mod
-          - quick_reroll
-          - restarter
+          - double_seals
+          - orange_seals
+          - silver_seals
     uses: ./.github/workflows/package.yaml
     with:
       mod: ${{ matrix.mod }}
